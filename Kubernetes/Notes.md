@@ -9,3 +9,45 @@
 
 - The replica set is a Kubernetes controller that ensures that the desired state of your application, as specified in the deployment YAML manifest, is always maintained on the cluster. This includes implementing the  **auto-healing** and  **auto-scaling** behavior of your pods.
   If you specify in your deployment YAML manifest that you want a certain number of replicas for your pods, the replica set will ensure that this number of replicas is always running. If a pod is deleted or fails, the replica set will automatically create a new pod to maintain the desired number of replicas. Similarly, if you want to increase or decrease the number of replicas, you can simply update the deployment YAML manifest and the replica set will automatically scale the number of pods accordingly.
+
+
+
+
+## **Difference between Deployment and ReplicaSet--- shortnotes**
+- In Kubernetes, a Deployment is a higher-level resource that manages the desired state of your application by specifying the desired number of replicas for your pods. It provides features like rolling updates and rollbacks to help you manage your application at scale.
+When you create a Deployment, it creates an intermediate resource called a ReplicaSet. 
+
+- The ReplicaSet is responsible for ensuring that the desired number of replicas specified in the Deployment is always maintained. It does this by creating and deleting pods as necessary to match the desired state.
+
+- In summary, a Deployment is a higher-level resource that manages the desired state of your application, while a ReplicaSet is an intermediate resource created by the Deployment that ensures that the desired number of replicas is always maintained. The main difference between the two is that a Deployment provides additional features like rolling updates and rollbacks, while a ReplicaSet is focused on maintaining the desired number of replicas.
+- In k8s, there is a concept called controllers, main work of controller is to watching the POD is running in desired state or not. 
+	If not it sends the message to scheduler to create a new resource to achieve the desired state. -> One of the controllers is called "Deployment".
+	"Deployment" first creates "replica set (actual controller)" managed by "deployment" and replica set creates and manages the POD.
+
+
+- Deployments and ReplicaSets are both Kubernetes objects that are used to manage Pods. However, they have different purposes and capabilities.
+  Deployments are a higher-level abstraction than ReplicaSets. They provide a way to manage a set of Pods that are running the same application. Deployments can be used to 
+  create, update, and delete Pods in a controlled way. They can also be used to perform rolling updates, which allows you to update your Pods one at a time without 
+  interrupting your users.
+- ReplicaSets are a lower-level abstraction than Deployments. They are used to ensure that a specified number of Pods are running. ReplicaSet controllers will create new Pods 
+  if the number of Pods falls below the desired number, and they will delete Pods if the number of Pods exceeds the desired number.
+
+- In summary, Deployments are a more sophisticated way to manage Pods than ReplicaSets. They provide features such as rolling updates and rollbacks that are not available with ReplicaSets. However, ReplicaSets are more lightweight than Deployments, and they can be used for simple Pod management tasks.
+
+   ### **Which one should you use?**
+      The choice of whether to use a Deployment or a ReplicaSet depends on your specific needs. If you need to manage a set of Pods that are running the same application, and 
+      you need to be able to perform rolling updates, then you should use a Deployment. If you only need to ensure that a specified number of Pods are running, then you can 
+      use a ReplicaSet.
+
+
+
+
+
+
+
+
+
+
+
+
+  
