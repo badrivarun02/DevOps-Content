@@ -39,9 +39,21 @@ When you create a Deployment, it creates an intermediate resource called a Repli
       you need to be able to perform rolling updates, then you should use a Deployment. If you only need to ensure that a specified number of Pods are running, then you can 
       use a ReplicaSet.
 
+## **Difference between Auto healing and Auto scaling ?**
+- Auto healing is the process of automatically replacing unhealthy Pods. A Pod is considered unhealthy if it fails to respond to health checks. When a Pod is unhealthy, the auto healing controller will create a new Pod to replace it. This ensures that your application is always available, even if a Pod fails.
 
+- Auto scaling is the process of automatically adjusting the number of Pods in a Deployment. This is done based on the load on your application. If the load on your application increases, the auto scaling controller will create new Pods to handle the load. If the load on your application decreases, the auto scaling controller will delete Pods to reduce costs.
 
+- In real time, auto healing and auto scaling work together to ensure that your application is always available and performing well. If a Pod fails, auto healing will replace the Pod. If the load on your application increases, auto scaling will create new Pods to handle the load. If the load on your application decreases, auto scaling will delete Pods to reduce costs.
 
+### **Here is a table that summarizes the key differences between auto healing and auto scaling:**
+
+  |**Feature**  |     **Auto healing**         |         **Auto scaling**            |
+  |---|---|---|
+  | Purpose     | Replace unhealthy Pods	     | Adjust the number of Pods           |
+  | Trigger     | Unhealthy Pods               | Load on the application             |
+  | Action      | Create new Pods              | Delete or create Pods               |  
+  | Outcome	    | Always available application |	Performance optimized application  |
 
 
 
