@@ -1,0 +1,44 @@
+
+---
+- name: Uninstallation package on remote or localsystem
+  hosts: Allhost
+  become: true
+  tasks:
+    - name: Check if Jenkins is installed before uninstall
+      command: which jenkins
+      register: which_jenkins
+      failed_when: false
+    - name: Display output of 'which jenkins' command
+      debug:
+        var: which_jenkins.stdout_lines
+
+    - name: Get Jenkins package information before uninstall
+      command: dpkg -L jenkins
+      register: dpkg_jenkins
+      when: which_jenkins.rc == 0
+    - name: Display output of 'dpkg -L jenkins' command
+      debug:
+        var: dpkg_jenkins.stdout_lines
+
+    - name: Uninstall Jenkins
+      apt:
+       name: jenkins
+       state: absent
+       purge: yes
+      when: which_jenkins.rc == 0
+   
+    - name: Check if Jenkins is installed after uninstall
+      command: which jenkins
+      register: which_jenkins
+      failed_when: false
+    - name: Display output of 'which jenkins' command
+      debug:
+        var: which_jenkins.stdout_lines
+
+    - name: Get Jenkins package information after uninstall
+      command: dpkg -L jenkins
+      register: dpkg_jenkins
+      when: which_jenkins.rc == 0
+    - name: Display output of 'dpkg -L jenkins' command
+      debug:
+        var: dpkg_jenkins.stdout_lines

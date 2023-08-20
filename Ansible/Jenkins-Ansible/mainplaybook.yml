@@ -1,0 +1,10 @@
+
+---
+- name: Deploy package using role on remote host
+  hosts: Allhost
+  become: true
+  tasks:
+   - include_role:
+      name: jenkins
+     when: inventory_hostname == "localhost"
+   
