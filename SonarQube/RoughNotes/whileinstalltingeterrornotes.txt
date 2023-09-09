@@ -1,0 +1,192 @@
+
+
+**Issue 1:** Elasticsearch process exited with an exit value of 78.
+2023.08.27 16:20:24 INFO  app[][o.s.a.SchedulerImpl] Waiting for Elasticsearch to be up and running
+2023.08.27 16:20:43 WARN  app[][o.s.a.p.AbstractManagedProcess] Process exited with exit value [ElasticSearch]: 78
+2023.08.27 16:20:43 INFO  app[][o.s.a.SchedulerImpl] Process[ElasticSearch] is stopped
+2023.08.27 16:20:43 INFO  app[][o.s.a.SchedulerImpl] SonarQube is stopped
+2023.08.27 16:20:45 INFO  app[][o.s.a.AppFileSystem] Cleaning or creating temp directory /opt/sonarqube-9.9/temp
+2023.08.27 16:20:45 INFO  app[][o.s.a.es.EsSettings] Elasticsearch listening on [HTTP: 127.0.0.1:9001, TCP: 127.0.0.1:42927]
+2023.08.27 16:20:46 INFO  app[][o.s.a.ProcessLauncherImpl] Launch process[ELASTICSEARCH] from [/opt/sonarqube-9.9/elasticsearch]: /opt/sonarqube-9.9/elasticsearch/bin/elasticsearch
+
+
+**Solution:** This error code is associated with a failure to start Elasticsearch due to insufficient virtual memory. There are two methods to resolve this issue:
+
+      **Method 1:** Directly execute the following commands in the terminal:
+                    ```
+                     sudo sysctl -w vm.max_map_count=524288
+                     sudo sysctl -w fs.file-max=131072
+                     ulimit -n 131072
+                     ulimit -u 8192
+                    ```            
+         Please note that the changes made by this method are temporary and will be reset after a system reboot.
+
+      **Method 2:** To make these changes permanent, follow these steps to update the relevant configuration files:
+
+         1. Open the `/etc/sysctl.conf` file for editing by running `sudo nano /etc/sysctl.conf`.
+         2. Add the following lines to the bottom of the file:
+             ```
+             vm.max_map_count=524288
+             fs.file-max=131072
+             ```
+        3. Save the file and exit the editor.
+        4. Run `sudo sysctl --system` to apply the new changes.
+
+        5. To make the ulimit configuration permanent, create a new config file `/etc/security/limits.d/99-sonarqube.conf` by running `sudo nano /etc/security/limits.d/99-sonarqube.conf`.
+        6. Add the following configuration to the file:
+                         ```
+                        sonarqube   -   nofile   131072
+                        sonarqube   -   nproc    8192
+                        ```
+                         ```
+                         ((((((((((((((((OR)))))))))))))
+                        sonarqube   -   nofile   65536
+                        sonarqube   -   nproc    4096
+
+          Note: here file - 99-sonarqube.conf is customefile (need to create file and paste following step6)
+      
+      **Method 3:** In sonar.service file also add values like  LimitNOFILE=65536
+                                                              LimitNPROC=4092
+        errortypes of issues:○ sonar.service - SonarQube service
+        Loaded: loaded (/etc/systemd/system/sonar.service; enabled; vendor preset: enabled)
+        Active: inactive (dead) since Tue 2023-09-05 22:00:25 IST; 15s ago
+        Process: 19783 ExecStart=/opt/sonarqube-9.9/bin/linux-x86-64/sonar.sh start (code=exited, status=0/SUCCESS)
+        Process: 19997 ExecStop=/opt/sonarqube-9.9/bin/linux-x86-64/sonar.sh stop (code=exited, status=0/SUCCESS)
+        Main PID: 19806 (code=exited, status=0/SUCCESS)
+
+        Sep 05 22:00:01 DESKTOP-FKRSULO systemd[1]: Starting SonarQube service...
+        Sep 05 22:00:01 DESKTOP-FKRSULO sonar.sh[19783]: /usr/bin/java
+        Sep 05 22:00:01 DESKTOP-FKRSULO sonar.sh[19783]: Starting SonarQube...
+        Sep 05 22:00:01 DESKTOP-FKRSULO sonar.sh[19783]: Started SonarQube.
+        Sep 05 22:00:01 DESKTOP-FKRSULO systemd[1]: Started SonarQube service.
+        Sep 05 22:00:25 DESKTOP-FKRSULO sonar.sh[19997]: /usr/bin/java
+        Sep 05 22:00:25 DESKTOP-FKRSULO sonar.sh[19997]: Gracefully stopping SonarQube...
+        Sep 05 22:00:25 DESKTOP-FKRSULO sonar.sh[19997]: Removed stale pid file: ./SonarQube.pid
+        Sep 05 22:00:25 DESKTOP-FKRSULO sonar.sh[19997]: SonarQube was not running.
+        Sep 05 22:00:25 DESKTOP-FKRSULO systemd[1]: sonar.service: Deactivated successfully.
+
+        Solution: “The issue with the sonar.service was resolved by updating the service configuration. Specifically, the service type was changed from simple to forking,
+        which allowed the service to start successfully
+   
+
+**************************************************************************************************************************
+**************************************************************************************************************************
+Issue 2: Incorrectly configured PostgreSQL credentials in sonar.properties.
+logs from sonar.log:-
+
+2023.08.27 17:44:46 INFO  app[][o.s.a.SchedulerImpl] Waiting for Elasticsearch to be up and running
+2023.08.27 17:45:34 INFO  app[][o.s.a.SchedulerImpl] Process[es] is up
+2023.08.27 17:45:34 INFO  app[][o.s.a.ProcessLauncherImpl] Launch process[WEB_SERVER] from [/opt/sonarqube-9.9]: /usr/lib/jvm/java-17-openjdk-amd64/bin/java -Djava.awt.headless=true -Dfile.encoding=UTF-8 -Djava.io.tmpdir=/opt/sonarqube-9.9/temp -XX:-OmitStackTraceInFastThrow --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.management/sun.management=ALL-UNNAMED --add-opens=jdk.management/com.sun.management.internal=ALL-UNNAMED -Dcom.redhat.fips=false -Xmx512m -Xms128m -XX:+HeapDumpOnOutOfMemoryError -server -Dhttp.nonProxyHosts=localhost|127.*|[::1] -cp ./lib/sonar-application-9.9.1.69595.jar:/opt/sonarqube-9.9/lib/jdbc/postgresql/postgresql-42.5.1.jar org.sonar.server.app.WebServer /opt/sonarqube-9.9/temp/sq-process3531108976907610601properties
+2023.08.27 17:45:47 INFO  app[][o.s.a.SchedulerImpl] Process[Web Server] is stopped
+2023.08.27 17:45:47 INFO  app[][o.s.a.SchedulerImpl] Process[ElasticSearch] is stopped
+2023.08.27 17:45:47 WARN  app[][o.s.a.p.AbstractManagedProcess] Process exited with exit value [ElasticSearch]: 143
+2023.08.27 17:45:47 INFO  app[][o.s.a.SchedulerImpl] SonarQube is stopped
+2023.08.27 17:45:50 INFO  app[][o.s.a.AppFileSystem] Cleaning or creating temp directory /opt/sonarqube-9.9/temp
+2023.08.27 17:45:50 INFO  app[][o.s.a.es.EsSettings] Elasticsearch listening on [HTTP: 127.0.0.1:9001, TCP: 127.0.0.1:38369]
+2023.08.27 17:45:51 INFO  app[][o.s.a.ProcessLauncherImpl] Launch process[ELASTICSEARCH] from [/opt/sonarqube-9.9/elasticsearch]: /opt/sonarqube-9.9/elasticsearch/bin/elasticsearch
+
+from web.log:-
+Caused by: java.lang.IllegalStateException: Fail to connect to database
+        at org.sonar.db.DefaultDatabase.start(DefaultDatabase.java:130)
+        at org.sonar.core.platform.StartableBeanPostProcessor.postProcessBeforeInitialization(StartableBeanPostProcessor.java:33)
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.applyBeanPostProcessorsBeforeInitialization(AbstractAutowireCapableBeanFactory.java:440)
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1796)
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:620)
+        ... 44 common frames omitted
+Caused by: com.zaxxer.hikari.pool.HikariPool$PoolInitializationException: Failed to initialize pool: FATAL: password authentication failed for user "sonarqube"
+        at com.zaxxer.hikari.pool.HikariPool.throwPoolInitializationException(HikariPool.java:596)
+        at com.zaxxer.hikari.pool.HikariPool.checkFailFast(HikariPool.java:582)
+        at com.zaxxer.hikari.pool.HikariPool.<init>(HikariPool.java:100)
+        at com.zaxxer.hikari.HikariDataSource.<init>(HikariDataSource.java:81)
+        at org.sonar.db.DefaultDatabase.createHikariDataSource(DefaultDatabase.java:159)
+        at org.sonar.db.DefaultDatabase.initDataSource(DefaultDatabase.java:148)
+        at org.sonar.db.DefaultDatabase.start(DefaultDatabase.java:126)
+        ... 48 common frames omitted
+Caused by: org.postgresql.util.PSQLException: FATAL: password authentication failed for user "sonarqube"
+        at org.postgresql.core.v3.ConnectionFactoryImpl.doAuthentication(ConnectionFactoryImpl.java:659)
+        at org.postgresql.core.v3.ConnectionFactoryImpl.tryConnect(ConnectionFactoryImpl.java:180)
+        at org.postgresql.core.v3.ConnectionFactoryImpl.openConnectionImpl(ConnectionFactoryImpl.java:235)
+        at org.postgresql.core.ConnectionFactory.openConnection(ConnectionFactory.java:49)
+        at org.postgresql.jdbc.PgConnection.<init>(PgConnection.java:247)
+        at org.postgresql.Driver.makeConnection(Driver.java:434)
+        at org.postgresql.Driver.connect(Driver.java:291)
+        at com.zaxxer.hikari.util.DriverDataSource.getConnection(DriverDataSource.java:121)
+        at com.zaxxer.hikari.pool.PoolBase.newConnection(PoolBase.java:359)
+        at com.zaxxer.hikari.pool.PoolBase.newPoolEntry(PoolBase.java:201)
+        at com.zaxxer.hikari.pool.HikariPool.createPoolEntry(HikariPool.java:470)
+        at com.zaxxer.hikari.pool.HikariPool.checkFailFast(HikariPool.java:561)
+        ... 53 common frames omitted
+
+
+
+Solution: I had to recheck my PostgreSQL username and password. My original credentials were as follows:
+
+PostgreSQL username: sonar (created using createuser sonar)
+PostgreSQL password: son@rq (set using ALTER USER sonar WITH ENCRYPTED password 'son@rq')
+PostgreSQL database name: sonarqube (created using CREATE DATABASE sonarqube OWNER sonar)
+However, I mistakenly configured the SonarQube properties to use the database name as the PostgreSQL username. For example:
+
+sonar.jdbc.username=sonarqube (I mistakenly used the PostgreSQL database name instead of the username)
+sonar.jdbc.password=son@rq
+sonar.jdbc.url=jdbc:postgresql://localhost/sonarqube
+To resolve this issue, I searched online blogs and found my mistake by checking the logs in the SonarQube home directory. I then changed the SonarQube properties to use the correct PostgreSQL username:
+
+sonar.jdbc.username=sonar
+sonar.jdbc.password=son@rq
+sonar.jdbc.url=jdbc:postgresql://localhost/sonarqube
+
+
+**Issue 3:** Forgot the admin password of SonarQube.
+
+**Solution:** Follow these steps to reset the admin password:
+1. Check the SonarQube documentation using this link:- https://docs.sonarsource.com/sonarqube/9.9/instance-administration/security/#postgresql-and-microsoft-sql-server
+2. Log in to the PostgreSQL user account by running `sudo su - postgres` in the terminal.
+3. Connect to the PostgreSQL database by running the `psql` command.
+4. Check which database you are currently connected to by running `\c`.
+5. Change to the SonarQube database by running `\c sonarqube`. This is necessary because all SonarQube details are stored in this database.
+6. Run the following command to reset the admin password:
+
+   '''   
+    update users set crypted_password='100000$t2h8AtNs1AlCHuLobDjHQTn9XppwTIx88UjqUm4s8RsfTuXQHSd/fpFexAnewwPsO6jGFQUv/24DnO55hY6Xew==', salt='k9x9eN127/3e/hf38iNiKwVfaVk=', hash_method='PBKDF2', reset_password='true', user_local='true' where login='admin';
+   
+   '''
+7. Log in to SonarQube using the default username (`admin`) and password (`admin`).
+8. Change the password when prompted for security purposes.
+
+**Issue 4:** The error message you are seeing is due to the fact that you are trying to use two different modules, include_vars and replace, in the same task. 
+These two modules cannot be used together in the same task, and must be separated into two different tasks.
+Here is an example of how you can separate the two modules into two different tasks:
+
+- name: Include variables from file
+  include_vars: /home/badrivarun/ansible/roles/postgres_install/default/main.yml
+
+- name: Modify sonar.properties file
+  replace:
+    path: /opt/sonarqube-9.9/conf/sonar.properties
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - { regexp: '^#sonar.jdbc.username=.*', replace: 'sonar.jdbc.username=sonar' }
+    - { regexp: '^#sonar.jdbc.password=.*', replace: 'sonar.jdbc.password={{postgrespass}}' }
+    - { regexp: '^#sonar.jdbc.url=jdbc\\\:postgresql\\\:.*', replace: 'sonar.jdbc.url=jdbc\\\:postgresql\\\://localhost/sonarqube' }
+    - { regexp: '^#sonar.web.host=.*', replace: 'sonar.web.host=0.0.0.0' }
+    - { regexp: '^#sonar.web.port=.*', replace: 'sonar.web.port=9000' }
+    - { regexp: '^#sonar.web.context=.*', replace: 'sonar.web.context=/sonar' }
+    - { regexp: '^#sonar.web.javaAdditionalOpts=.*', replace: 'sonar.web.javaAdditionalOpts=-server' }
+    - { regexp: '^#sonar.search.javaOpts=.*', replace: 'sonar.search.javaOpts=-Xmx512m -Xms512m -XX:MaxDirectMemorySize=256m -XX:+HeapDumpOnOutOfMemoryError'}
+    - { regexp: '^#sonar.log.level=.*', replace: 'sonar.log.level=INFO' }
+    - { regexp: '^#sonar.path.logs=.*', replace: 'sonar.path.logs=logs' }
+
+
+
+
+
+
+
+
+
+
+
+
+
+

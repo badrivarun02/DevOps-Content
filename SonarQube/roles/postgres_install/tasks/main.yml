@@ -1,0 +1,48 @@
+---
+# tasks file for postgres_install
+# Step 1: Update & packages  package installation here
+    - name: Update and upgrade apt packages
+      apt:
+         update_cache: yes
+         upgrade: yes
+
+# Step 2: Postgreql package installation here and  Verify PostgreSQL installation 
+
+    - name: Add PostgreSQL APT repository
+      apt_repository:
+        repo: "deb http://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main"
+        state: present
+
+    - name: Add PostgreSQL APT key
+      apt_key:
+        url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+        state: present
+
+    - name: Update and install PostgreSQL package
+      apt:
+        name: postgresql
+        update_cache: yes
+        state: present
+
+    - name: Check PostgreSQL service status
+      command: systemctl status postgresql
+      register: postgresql_service_status
+
+    - debug:
+        var: postgresql_service_status.stdout_lines
+
+ # Step 3: Create user,set password, database and  configure it
+
+    - name: Set postgres user password
+      become: true
+      shell: echo 'postgres:{{ userpostgrespass }}' | chpasswd
+
+    - name: Create PostgreSQL user
+      become_user: postgres
+      shell: |
+        createuser {{ postgresuser }}
+        psql -c "ALTER USER sonar WITH ENCRYPTED PASSWORD '{{ postgrespass }}'"
+        psql -c "CREATE DATABASE sonarqube OWNER {{ postgresuser }}"
+        psql -c "GRANT ALL PRIVILEGES ON DATABASE sonarqube TO {{ postgresuser }}"
+
+

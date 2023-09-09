@@ -1,0 +1,8 @@
+---
+# tasks file for java_uninstall
+- name: Uninstall Java
+  apt:
+    name: "{{Java_package}}"
+    state: absent
+    purge: yes
+    autoremove: yes

@@ -1,0 +1,5 @@
+---
+- hosts: Allhost
+  become: true
+  roles:
+    -  sonarqube_uninstall

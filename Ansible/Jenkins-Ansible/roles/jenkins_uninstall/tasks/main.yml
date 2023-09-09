@@ -1,0 +1,41 @@
+---
+# tasks file for jenkins_uninstall
+    - name: Check if Jenkins is installed before uninstall # This is the name of the first task
+      command: which jenkins # This runs the 'which jenkins' command to check if Jenkins is installed
+      register: which_jenkins # This stores the output of the command in a variable called 'which_jenkins'
+      failed_when: false # This prevents the task from failing even if the command returns a non-zero exit code
+    - name: Display output of 'which jenkins' command # This is the name of the second task
+      debug: # This module prints debugging information
+        var: which_jenkins.stdout_lines # This specifies that the value of 'which_jenkins.stdout_lines' should be printed
+
+    - name: Get Jenkins package information before uninstall # This is the name of the third task
+      command: dpkg -L jenkins # This runs the 'dpkg -L jenkins' command to get information about the Jenkins package
+      register: dpkg_jenkins # This stores the output of the command in a variable called 'dpkg_jenkins'
+      when: which_jenkins.rc == 0 # This specifies that this task should only be executed if the previous 'which jenkins' command returned an exit code of 0 (i.e. Jenkins is installed)
+    - name: Display output of 'dpkg -L jenkins' command # This is the name of the fourth task
+      debug: # This module prints debugging information
+        var: dpkg_jenkins.stdout_lines # This specifies that the value of 'dpkg_jenkins.stdout_lines' should be printed
+
+    - name: Uninstall Jenkins # This is the name of the fifth task
+      apt: # This module manages packages using apt
+       name: jenkins # This specifies that the Jenkins package should be uninstalled
+       state: absent # This specifies that the package should be removed
+       purge: yes # This specifies that configuration files should also be removed
+      when: which_jenkins.rc == 0 # This specifies that this task should only be executed if Jenkins is installed
+
+    - name: Check if Jenkins is installed after uninstall # This is the name of the sixth task
+      command: which jenkins # This runs the 'which jenkins' command again to check if Jenkins has been uninstalled successfully
+      register: which_jenkins # This stores the output of the command in a variable called 'which_jenkins'
+      failed_when: false # This prevents the task from failing even if the command returns a non-zero exit code
+    - name: Display output of 'which jenkins' command # This is the name of the seventh task
+      debug: # This module prints debugging information
+        var: which_jenkins.stdout_lines # This specifies that the value of 'which_jenkins.stdout_lines' should be printed
+
+    - name: Get Jenkins package information after uninstall # This is the name of the eighth task
+      command: dpkg -L jenkins # This runs the 'dpkg -L jenkins' command again to check if any files are left after uninstalling Jenkins
+      register: dpkg_jenkins # This stores the output of the command in a variable called 'dpkg_jenkins'
+      when: which_jenkins.rc == 0 # This specifies that this task should only be executed if Jenkins has been uninstalled successfully (i.e. if 'which jenkins' returned an exit code of 0)
+    - name: Display output of 'dpkg -L jenkins' command # This is the name of the ninth and final task
+      debug:
+        var: dpkg_jenkins.stdout_lines
+

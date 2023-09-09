@@ -1,0 +1,7 @@
+---
+# defaults file for postgres_uninstall
+packages: 
+   - unzip
+   - acl
+   - openjdk-17-jre-headless
+   - postgresql*

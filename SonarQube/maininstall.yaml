@@ -1,0 +1,9 @@
+---
+- name: Deploy package using role on remote host
+  hosts: Allhost
+  become: true
+  roles:
+      - samplepkg
+      - java_install
+      - postgres_install
+      - sonarqube_install

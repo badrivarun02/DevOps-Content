@@ -1,0 +1,122 @@
+---
+# tasks file for sonarqube_install
+# Add values and limits for sonarqube
+
+    - name: Set sysctl settings
+      sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        state: present
+        reload: yes
+      loop:
+        - { name: 'vm.max_map_count', value: '524288' }
+        - { name: 'fs.file-max', value: '131072' }
+
+    - name: Set limits for sonarqube user
+      lineinfile:
+         path: /etc/security/limits.d/99-sonarqube.conf
+         line: "{{ item }}"
+         create: yes
+      loop:
+            - 'sonarqube   -   nofile   131072'
+            - 'sonarqube   -   nproc    8192'
+# Download sonarqube 
+    - name: Download SonarQube
+      get_url:
+        url: "{{ sonarqube_url }}"
+        dest: /opt/
+      
+# Unzip SonarQube zip file and rename the filename 
+    - name: Check if rename SonarQube file exists
+      stat:
+       path: "/opt/sonarqube-{{ sonarqube_version }}"
+      register: sonarqube_file
+    - name: Unzip SonarQube zip file
+      unarchive:
+           src: /opt/sonarqube-{{sonarqube_version}}.zip
+           dest: /opt/
+           remote_src: yes
+      when: not sonarqube_file.stat.exists
+    - name: Check if rename SonarQube file exists
+      stat:
+       path: "/opt/{{ sonarrename }}"
+      register: sonarqube_file
+    - name: Rename SonarQube directory
+      command: mv /opt/sonarqube-{{sonarqube_version}} /opt/{{ sonarrename }} 
+      when: not sonarqube_file.stat.exists
+# Create user and grp , change ownership of sonarqube file
+
+    - name: Create group sonar
+      group:
+        name: sonar
+        state: present
+
+    - name: Create user sonar
+      user:
+        name: sonar
+        comment: "user to run SonarQube"
+        home: /opt/{{ sonarrename }}
+        group: sonar
+
+    - name: Change file ownership for /opt/{{ sonarrename }}
+      file:
+        path: /opt/{{ sonarrename }}
+        owner: sonar
+        group: sonar
+        recurse: yes
+
+# Modify the sonar properties, sonar.sh and create service for sonarqube
+    - name: Include variables from file
+      include_vars: ~/ansible/roles/postgres_install/defaults/main.yml
+    - name: Modify sonar.properties file
+      replace:
+        path: /opt/{{ sonarrename }}/conf/sonar.properties
+        regexp: "{{ item.regexp }}"
+        replace: "{{ item.replace }}"
+      loop:
+        - { regexp: '^#sonar.jdbc.username=.*', replace: 'sonar.jdbc.username={{postgresuser}}' }
+        - { regexp: '^#sonar.jdbc.password=.*', replace: 'sonar.jdbc.password={{postgrespass}}' }
+        - { regexp: '^#sonar.jdbc.url=jdbc\\\:postgresql\\\:.*', replace: 'sonar.jdbc.url=jdbc\\\:postgresql\\\://localhost/sonarqube' }
+        - { regexp: '^#sonar.web.host=.*', replace: 'sonar.web.host=0.0.0.0' }
+        - { regexp: '^#sonar.web.port=.*', replace: 'sonar.web.port=9000' }
+        - { regexp: '^#sonar.web.context=.*', replace: 'sonar.web.context=/sonar' }
+        - { regexp: '^#sonar.web.javaAdditionalOpts=.*', replace: 'sonar.web.javaAdditionalOpts=-server' }
+        - { regexp: '^#sonar.search.javaOpts=.*', replace: 'sonar.search.javaOpts=-Xmx512m -Xms512m -XX:MaxDirectMemorySize=256m -XX:+HeapDumpOnOutOfMemoryError'}
+  
+    - name: Edit the sonar script file and set RUN_AS_USER
+      lineinfile:
+        path: /opt/{{ sonarrename }}/bin/linux-x86-64/sonar.sh
+        line: 'RUN_AS_USER=sonar'
+        insertafter: '^APP_NAME="SonarQube"'
+
+    - name: Create SonarQube service
+      template:
+       src: roles/sonarqube_install/templates/{{sonarsvcn}}.j2
+       dest: /etc/systemd/system/{{sonarsvcn}}
+
+# Reload systemd service, start ,check status of service
+
+    - name: Manage sonar service
+      systemd:
+         name: '{{sonarsvcn}}'
+         enabled: yes
+         state: started
+         daemon_reload: yes
+      register: sonar_service_status
+
+    - debug:
+       msg: "Sonar service is {{ 'running' if sonar_service_status.status.ActiveState == 'active' else 'not running' }}"
+
+    - name: Reload systemd manager and restart sonar configuration
+      systemd:
+        name: '{{sonarsvcn}}'
+        daemon_reload: yes
+        state: restarted
+      register: sonar_service_status
+    - debug:
+       msg: "Sonar service is {{ 'running' if sonar_service_status.status.ActiveState == 'active' else 'not running' }}"
+
+
+
+
+

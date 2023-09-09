@@ -1,0 +1,9 @@
+---
+# tasks file for java_install
+- name: Update APT package manager repositories cache
+  apt:
+     update_cache: yes
+- name: Install Java
+  apt:
+    name: "{{ java_package }}"
+    state: present

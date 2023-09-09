@@ -1,0 +1,70 @@
+---
+# tasks file for postgres_uninstall and sonaruninstall
+    - name: Include variables from file
+      include_vars: ~/ansible/roles/sonarqube_install/defaults/main.yml
+    
+    - name: Remove packages 
+      apt:
+        name: "{{ item }}"
+        state: absent
+        purge: yes
+        autoremove: yes
+      loop: "{{ packages }}"
+
+    - name: Remove PostgreSQL directories
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/lib/postgresql/
+        - /var/log/postgresql/
+        - /etc/postgresql/
+
+    - name: Remove users
+      user:
+        name: "{{ item }}"
+        state: absent
+        force: yes
+      loop:
+        - postgres
+        - sonar
+    - name: Remove group
+      group:
+        name: sonar
+        state: absent
+        force: yes
+    - name: Remove lines from sysctl.conf
+      lineinfile:
+        path: /etc/sysctl.conf
+        line: "{{ item }}"
+        state: absent
+      loop:
+        - "vm.max_map_count=524288"
+        - "fs.file-max=131072"
+
+    - name: Remove limits file
+      file:
+        path: /etc/security/limits.d/99-sonarqube.conf
+        state: absent
+
+    - name: Remove service file
+      file:
+        path: "{{item}}"
+        state: absent
+      loop:
+         - /etc/systemd/system/{{sonarsvcn}}
+         - /etc/systemd/system/multi-user.target.wants/{{sonarsvcn}}
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+    
+    
+    - name: Remove SonarQube directory and zip file
+      file:
+       path: "{{ item }}"
+       state: absent
+      loop:
+       - /opt/{{ sonarrename }}
+       - /opt/sonarqube-{{ sonarqube_version }}
+       - /opt/sonarqube-{{ sonarqube_version }}.zip 

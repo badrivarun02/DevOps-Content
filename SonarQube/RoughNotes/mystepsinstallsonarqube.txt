@@ -1,0 +1,274 @@
+--------------------------------------------------------------------------------------------------------------------
+###first step### : 
+--- sudo apt update && sudo apt upgrade
+    sudo apt install unzip -y 
+    sudo apt install acl -y 
+    sudo apt install openjdk-17-jre-headless  
+---------------------------------------------------------------------------------------------------------------------
+###second step###:- installation of postgress opensource DB . nOTE: we can any opensource DB
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+sudo apt-get update
+sudo apt-get -y install postgresql
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+save in ***scriptname.sh *** 
+        ***sudo chmod +x scriptname.sh***
+        *** sudo ./scriptname.sh***
+
+after successfull installation above postgresql scripts and we can verify using below commands:
+ *** sudo systemctl status postgresql ***
+
+Change default passward of postgresql but has no password for postgresql on linux:
+*** sudo passwd postgres *** note:- postgres----username 
+
+Switch to postgres user and create a user called sonar:
+*** su - postgres *** 
+
+Now, create a  new user that will access the database for Sonarqube:
+***createuser sonar***
+
+Switch to the PostgreSQL shell:
+*** psql ***
+*** ALTER USER sonar WITH ENCRYPTED password 'son@rq'; *** #To secure a newly created user, set a password for the same using the below syntax:
+*** CREATE DATABASE sonarqube OWNER sonar; *** # Create a new database on  PostgreSQL by running:
+*** grant all privileges on DATABASE sonarqube to sonar; *** #optional steps #grant all privileges to sonar user on sonarqube Database.
+$$$$$Note: to check , Next, run the following queries to check the list of databases and users on the PostgreSQL server.
+
+\l
+\du
+If your database and user is created, you will see the database 'sonarqube' on the list of databases, and the user 'sonarqube' on the list of users.$$$$
+
+Exit from the psql shell: \q
+switch back to normal user : using *** exit ***
+
+Note: optional notes:
+In PostgreSQL, you can change the name of an existing user by using the ALTER USER or ALTER ROLE command with the RENAME TO option. Here is an example of how you can change the name of a user from old_name to new_name:
+
+ALTER USER old_name RENAME TO new_name;
+
+or
+
+ALTER ROLE old_name RENAME TO new_name;
+
+In your case, if you want to change the name of the user from sonar to sonaruser, you can use the following command:
+
+*** ALTER USER sonar RENAME TO sonaruser; ***
+Copy
+or
+
+*** ALTER ROLE sonar RENAME TO sonaruser; ***
+
+After executing this command, the name of the user will be changed from sonar to sonaruser. You can then use the new username in subsequent commands.
+
+-------------------------------------------------------------------------------------------------------------------------------------
+###Third STEP###  
+
+******************************************************BASH_SCRIPTS*****************************************************************************
+#!/bin/bash
+# Edit /etc/sysctl.conf
+sudo vi /etc/sysctl.conf
+# Set vm.max_map_count to 524288
+echo "vm.max_map_count=524288" | sudo tee -a /etc/sysctl.conf
+# Set fs.file-max to 131072
+echo "fs.file-max=131072" | sudo tee -a /etc/sysctl.conf
+
+# Reload sysctl settings
+sudo sysctl --system
+
+# Edit /etc/security/limits.d/99-sonarqube.conf
+sudo vi /etc/security/limits.d/99-sonarqube.conf
+# Set nofile limit for sonarqube user to 131072
+echo "sonarqube   -   nofile   131072" | sudo tee -a /etc/security/limits.d/99-sonarqube.conf
+# Set nproc limit for sonarqube user to 8192
+echo "sonarqube   -   nproc    8192" | sudo tee -a /etc/security/limits.d/99-sonarqube.conf
+
+# Sonarqube installation and setup
+# Step 1: Download SonarQube zip file 
+sudo wget https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-9.9.1.69595.zip -P /opt
+
+# Step 2: Unzip SonarQube zip file and rename the filename
+sudo unzip /opt/sonarqube-9.9.1.69595.zip -d /opt
+sudo mv /opt/sonarqube-9.9.1.69595 sonarqube-9.9 
+
+# Step 3: Create group and user
+sudo groupadd sonar
+sudo useradd -c "user to run SonarQube" -d /opt/sonarqube-9.9 -g sonar sonar 
+sudo chown sonar:sonar /opt/sonarqube-9.9 -R
+
+# Step 4: Modify sonar.properties file
+sudo sed -i 's/#sonar.jdbc.username=.*/sonar.jdbc.username=sonar/' /opt/sonarqube-9.9/conf/sonar.properties
+sudo sed -i 's/#sonar.jdbc.password=.*/sonar.jdbc.password=son@rq/' /opt/sonarqube-9.9/conf/sonar.properties
+sudo sed -i 's/#sonar.jdbc.url=jdbc:postgresql:.*/sonar.jdbc.url=jdbc:postgresql:\/\/localhost\/sonarqube/' /opt/sonarqube-9.9/conf/sonar.properties
+sudo sed -i 's/#sonar.web.host=.*/sonar.web.host=0.0.0.0/' /opt/sonarqube-9.9/conf/sonar.properties
+sudo sed -i 's/#sonar.web.port=.*/sonar.web.port=9000/' /opt/sonarqube-9.9/conf/sonar.properties
+sudo sed -i 's/#sonar.web.context=.*/sonar.web.context=\/sonar/' /opt/sonarqube-9.9/conf/sonar.properties
+sudo sed -i 's/#sonar.web.javaAdditionalOpts=.*/sonar.web.javaAdditionalOpts=-server/' /opt/sonarqube-9.9/conf/sonar.properties
+sudo sed -i 's/#sonar.search.javaOpts=.*/sonar.search.javaOpts=-Xmx512m -Xms512m -XX:MaxDirectMemorySize=256m -XX:+HeapDumpOnOutOfMemoryError/' /opt/sonarqube-9.9/conf/sonar.properties
+
+# Step 5: Edit the sonar script file and set RUN_AS_USER
+sudo sed -i 's/#RUN_AS_USER=.*/RUN_AS_USER=sonar/' /opt/sonarqube-9.9/bin/linux-x86-64/sonar.sh
+
+# Step 6: Create Sonar as a service
+cat <<EOT | sudo tee /etc/systemd/system/sonar.service
+[Unit]
+Description=SonarQube service
+After=syslog.target network.target
+
+[Service]
+Type=forking
+User=sonar
+Group=sonar
+ExecStart=/opt/sonarqube-9.9/bin/linux-x86-64/sonar.sh start
+ExecStop=/opt/sonarqube-9.9/bin/linux-x86-64/sonar.sh stop
+LimitNOFILE=65536 # we can also use this  LimitNOFILE=131072
+LimitNPROC=4096   # we can also use this  LimitNPROC=8192
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOT
+-------------------8888888888888-8888888888888888888--------------------------------
+[Unit]
+Description=SonarQube service
+After=syslog.target network.target
+
+[Service]
+Type=for
+User=sonar
+Group=sonar
+ExecStart=/opt/sonarqube-9.9/bin/linux-x86-64/sonar.sh start
+ExecStop=/opt/sonarqube-9.9/bin/linux-x86-64/sonar.sh stop
+LimitNOFILE=131072
+LimitNPROC=8192
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+# Enable and restart service
+sudo systemctl daemon-reload
+sudo systemctl enable sonar.service   # configure the SonarQube service to start automatically on boot
+sudo systemctl start sonar.service    # Start the SonarQube service
+sudo systemctl status sonar.service   # Check the status of the SonarQube service to ensure that it has started and is running as expected
+
+******************************************************BASH_SCRIPTS*****************************************************************************
+NOTES: The tee command with the -a option appends the provided text to the end of the specified file without erasing any existing lines. 
+So, if you run the script as provided, it will add the new lines to the end of the specified files without erasing any existing lines.
+
+However, if you want to replace existing lines in the files instead of appending new lines, you can use the sed command as shown in your previous message. 
+The sed command searches for specific lines in a file and replaces them with new values.
+
+Optionalstep:sonar ALL=(ALL) NOPASSWD:ALL ###Grand sudo access to sonar user
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+Additional_Notes: but no need while setup SonarQube
+
+In Ubuntu, To check if a port is open on your local machine, you can use the *** netstat *** or *** ss *** command. 
+These commands display information about the network connections on your system, including the state of TCP and UDP ports.
+One such utility is the `ss` command, which can be used to display ports that are listening for connections. 
+           You can use the `-ltn` options with the `ss` command to see concise and relevant output. 
+           For example, to check for open ports on your system, you can run the following command: 
+                                                          *** sudo ss -ltn ***.
+           Here is an example of how to use the netstat command to check if TCP port 9000 is open on your local machine:
+                                                   *** sudo netstat -tln | grep :9000 ***
+                                                                        
+If you find that a port is not open and you want to open it, you can use Ubuntu's built-in firewall, `ufw` (Uncomplicated Firewall), 
+which is a frontend for `iptables`. To manage your ports using `ufw`, first check its status by running the command: *** sudo ufw status verbose ***. 
+If the output shows that the status is inactive, you can enable the firewall by running the command:  *** sudo ufw enable ***.
+                                                 you can disable the firewall by running the command: *** sudo ufw disable ***.
+
+Once the firewall is enabled, you can open a port by running the command: *** sudo ufw allow [port number] ***. 
+For example, to open port 22, you would run the command: *** sudo ufw allow 22 ***.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+Uninstallation steps :
+ packages: Unzip 
+     Check details of files: The next step involves checking the details of the files associated with the unzip package. This can be done using two commands:
+        which unzip: This command shows the path to the unzip executable.
+        dpkg -L unzip: This command lists all the files installed by the unzip package.
+     Uninstall package: After checking the details of the files, the next step is to uninstall the unzip package. This can be done using the following command:
+        sudo apt-get remove --purge unzip -y: This command removes the unzip package and purges its configuration files.
+
+Packages : postgresql
+Open a terminal and run the command sudo apt-get --purge remove postgresql to remove the PostgreSQL package 1.
+Run the command dpkg -l | grep postgres to list all packages related to PostgreSQL 1.
+For each package listed, run the command sudo apt-get --purge autoremove postgresql* to remove it 1.
+Finally, use the rm command to delete the PostgreSQL data and configuration directories. 
+For example, run the commands sudo rm -rf /var/lib/postgresql/, sudo rm -rf /var/log/postgresql/, and sudo rm -rf /etc/postgresql/ 
+
+Packages : sonarqube
+Remove useraccount& groupaccount sonar and also folder of sonarqube 
+cut -d: -f1 /etc/passwd ------list of user in ubuntu
+sudo deluser username ---- sudo deluser postgres and sudo deluser sonar
+additional files need to remove :
+remove the systemd file like /etc/systemd/system/sonarqube.service
+remove the lines of virtualmemory addin sysctl.conf   /etc/sysctl.conf
+remove the ulimit of file like /etc/security/limits.d/99-sonarqube.conf
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+Additional commands: sudo update-alternatives --config java
+
+--------------------------------------------------------------------------------------------------------------------------
+Additional_notes2:
+The issue is that you're trying to use variables in a file located in the `files` directory. Ansible doesn't process variables in files, it treats them as static content. If you want to use variables, you should use a template instead.
+
+Here's how you can do it:
+
+1. Move your `sonarect.service` file from the `files` directory to the `templates` directory.
+
+2. Rename the file to `sonarect.service.j2` to indicate that it's a Jinja2 template.
+
+3. In your Ansible task, use the `template` module instead of the `copy` module to copy the file. The `template` module will process the file as a Jinja2 template and replace the variables with their values.
+
+Here's an example of what your task might look like:
+
+```yaml
+- name: Copy sonar.service file
+  template:
+    src: sonarect.service.j2
+    dest: /etc/systemd/system/sonar.service
+```
+
+In this task, Ansible will replace `{{ sonarrename }}` and `{{ sonarqube_version }}` with their respective values defined in your `defaults/main.yml` file when copying the file to its destination.
+
+
+--------------------------------------------------------------------------------------------------------------------------
+reference link :
+https://linux.how2shout.com/how-to-install-sonarqube-on-ubuntu-22-04-lts-server/#5_Create_a_database_for_Sonar
+https://www.coachdevops.com/2020/04/install-sonarqube-on-ubuntu-how-to.html
+https://www.howtoforge.com/how-to-install-sonarqube-on-ubuntu-22-04/
+https://devopscube.com/setup-and-configure-sonarqube-on-linux/
+https://www.fosstechnix.com/how-to-install-sonarqube-on-ubuntu-22-04-lts/
+https://dev.to/oayanda/bash-script-sonarqube-and-postgres-database-setup-for-code-analysis-43i0
+https://www.cidevops.com/2018/08/devops-faqs-page.html
+
+https://docs.sonarsource.com/sonarqube/9.9/setup-and-upgrade/configure-and-operate-a-server/operating-the-server/#running-sonarqube-as-service-linux-systemd
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

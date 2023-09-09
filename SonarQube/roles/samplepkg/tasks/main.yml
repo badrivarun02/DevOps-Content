@@ -1,0 +1,11 @@
+---
+    - name: Update package index
+      apt:
+        update_cache: yes
+        upgrade: yes
+    - name: Install unzip and acl packages
+      apt:
+        name:
+          - unzip
+          - acl
+        state: present
