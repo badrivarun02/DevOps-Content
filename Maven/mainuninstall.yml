@@ -1,0 +1,7 @@
+---
+- name: Deploy package using role on remote host
+  hosts: Allhost
+  become: true
+  roles:
+     - ~/ansible/DevOps-Content/SonarQube/roles/java_uninstall
+     - maven_uninstall

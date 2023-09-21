@@ -67,7 +67,7 @@
 
 # Modify the sonar properties, sonar.sh and create service for sonarqube
     - name: Include variables from file
-      include_vars: ~/ansible/roles/postgres_install/defaults/main.yml
+      include_vars: ./roles/postgres_install/defaults/main.yml
     - name: Modify sonar.properties file
       replace:
         path: /opt/{{ sonarrename }}/conf/sonar.properties

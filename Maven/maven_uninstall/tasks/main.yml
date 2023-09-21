@@ -1,0 +1,14 @@
+---
+# tasks file for maven_uninstall
+   
+  - name: Include variables from file
+    include_vars: ./maven_install/defaults/main.yml
+     
+  - name: Remove Maven directory and maven.sh
+    file:
+        path: '{{ item }}'
+        state: absent
+    loop:
+       - /opt/{{ unzip_foldername }}
+       - /etc/profile.d/maven.sh
+
