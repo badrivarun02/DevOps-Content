@@ -1,0 +1,58 @@
+---
+# tasks file for maven
+# Update pkg cache
+- name: Update APT package manager repositories cache
+  apt:
+   update_cache: yes
+#Java installation if not available  
+- name: Check if Java is installed
+  command: java --version
+  register: java_installed
+  ignore_errors: yes
+- name: Install Java if not installed
+  apt:
+   name: '{{ java_package }}'
+   state: present
+  when: java_installed.rc != 0
+
+- name: Download Maven
+  get_url:
+    url: "{{ maven_download_url }}"
+    dest: /tmp
+
+- name: Extract Maven
+  unarchive:
+    src: "/tmp/apache-maven-{{ maven_version }}-bin.tar.gz"
+    dest: /opt
+    remote_src: yes
+
+- name: Rename Maven directory
+  command:
+    cmd: mv /opt/apache-maven-{{ maven_version }} {{ maven_install_dir }}
+
+- name: Set environment variables
+  copy:
+    dest: /etc/profile.d/maven.sh
+    content: |
+      export JAVA_HOME={{ java_home }}
+      export M2_HOME={{ maven_install_dir }}
+      export MAVEN_HOME={{ maven_install_dir }}
+      export PATH=${M2_HOME}/bin:${PATH}
+
+- name: Make the script executable
+  file:
+    path: /etc/profile.d/maven.sh
+    mode: '0755'
+
+- name: Source the script
+  shell: source /etc/profile.d/maven.sh
+  args:
+    executable: /bin/bash
+- name: Check Maven installation status
+  shell: bash -lc 'mvn --version'
+  register: maven_version
+  changed_when: False
+
+- name: Debug Maven version
+  debug:
+   msg: "{{ maven_version.stdout_lines[0] }}"

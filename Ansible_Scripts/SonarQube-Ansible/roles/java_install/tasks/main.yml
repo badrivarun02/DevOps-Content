@@ -1,0 +1,15 @@
+---
+# tasks file for java_install
+- name: Update APT package manager repositories cache
+  apt:
+     update_cache: yes
+
+- name: Check if Java is installed
+  command: java --version
+  register: java_installed
+  ignore_errors: yes
+- name: Install Java if not installed
+  apt:
+       name: '{{ java_package }}'
+       state: present
+  when: java_installed.rc != 0

@@ -1,0 +1,11 @@
+---
+# defaults file for sonarqube_install
+sonarqube_version: 10.4.1.88267
+sonarqube_url: "https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-{{ sonarqube_version }}.zip"
+
+#rename sonar folder name
+sonarrename: sonarqube-10.4
+
+
+#sonarservice name
+sonarsvcn: sonar.service

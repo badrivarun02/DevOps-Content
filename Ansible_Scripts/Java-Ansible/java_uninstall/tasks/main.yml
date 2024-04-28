@@ -1,0 +1,12 @@
+---
+# tasks file for java_uninstall
+- name: Include variables from file
+  include_vars: ./roles/java_install/vars/main.yml
+
+
+- name: Uninstall Java
+  apt:
+    name: "{{java_package}}"
+    state: absent
+    purge: yes
+    autoremove: yes

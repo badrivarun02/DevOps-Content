@@ -1,0 +1,5 @@
+---
+# vars file for jenkins_install
+#
+java_package: "openjdk-17-jre-headless"
+jenkins_http_port: 9012

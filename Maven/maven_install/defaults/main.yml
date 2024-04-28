@@ -1,8 +1,0 @@
----
-# defaults file for maven
-maven_url: https://dlcdn.apache.org/maven/maven-3/3.9.4/binaries/apache-maven-3.9.4-bin.tar.gz
-zip_folder: apache-maven-3.9.4-bin.tar.gz
-unzip_foldername: apache-maven-3.9.4
-
-#depedencies packages
-packages: openjdk-17-jre-headless
