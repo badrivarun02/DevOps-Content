@@ -1,0 +1,10 @@
+---
+# vars file for prometheus_install
+  prometheus_version: "2.51.2"
+  prometheus_download_url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+  prometheus_download_dir: "/tmp"
+  prometheus_extract_dir: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64"
+  prometheus_config_dir: "/etc/prometheus"
+  prometheus_data_dir: "/var/lib/prometheus"
+  prometheus_bin_dir: "/usr/local/bin"
+  prometheus_service_file: "/etc/systemd/system/prometheus.service"

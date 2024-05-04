@@ -1,0 +1,28 @@
+---
+# tasks file for grafana_uninstall
+
+    - name: Stop and disable Grafana service
+      systemd:
+        name: grafana-server
+        enabled: no
+        state: stopped
+    - name: Uninstall Grafana
+      apt:
+        name: "{{ item }}"
+        state: absent
+        purge: yes
+        autoremove: yes
+      loop: "{{packages}}"
+      
+    - name: Remove Grafana service file
+      file:
+        path: "{{ grafana_service_file }}"
+        state: absent
+    - name: Remove Grafana files and directories
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop: "{{ grafana_files_to_remove }}"
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes

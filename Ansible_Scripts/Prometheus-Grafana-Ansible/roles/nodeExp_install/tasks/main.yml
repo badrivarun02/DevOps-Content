@@ -1,0 +1,49 @@
+---
+# tasks file for node-install
+    - name: Update APT package manager repositories cache
+      apt:
+       update_cache: yes
+    - name: Download Node Exporter
+      get_url:
+        url: "{{ node_exporter_download_url }}"
+        dest: "{{ node_exporter_download_dir }}"
+    - name: Extract Node Exporter archive
+      unarchive:
+        src: "{{ node_exporter_download_dir }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+        dest: "{{ node_exporter_download_dir }}"
+        remote_src: yes
+    - name: Move Node Exporter binary
+      command: mv "{{ node_exporter_extract_dir }}/node_exporter" "{{ node_exporter_bin_dir }}"
+    - name: Create Node Exporter user
+      user:
+        name: node_exporter
+        system: yes
+        shell: /bin/false
+    - name: Create Node Exporter service
+      copy:
+        dest: "{{ node_exporter_service_file }}"
+        content: |
+          [Unit]
+          Description=Node Exporter
+          Wants=network-online.target
+          After=network-online.target
+
+          [Service]
+          User=node_exporter
+          Group=node_exporter
+          Type=simple
+          Restart=on-failure
+          RestartSec=5s
+          ExecStart=/usr/local/bin/node_exporter
+
+          [Install]
+          WantedBy=multi-user.target
+        mode: '0644'
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+    - name: Enable and start Node Exporter service
+      systemd:
+        name: node_exporter
+        enabled: yes
+        state: started

@@ -1,0 +1,14 @@
+---
+    - name: Add remote_collector job to Prometheus configuration
+      blockinfile:
+        path: "{{ prometheus_config_file }}"
+        block: |
+          {% for item in monitored_hosts %}
+            - job_name: "remote_collector"
+              scrape_interval: 10s
+              static_configs:
+                - targets: ["{{ item }}:{{ node_exporter_port }}"]
+          {% endfor %}
+        marker: "# {mark} ANSIBLE MANAGED BLOCK FOR remote_collector JOB"
+        insertafter: "scrape_configs:"
+      notify: Restart Prometheus

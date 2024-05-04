@@ -1,0 +1,48 @@
+---
+# tasks file for nodeExp-uninstall
+    - name: Include variables from file
+      include_vars:
+         file: ./roles/nodeExp_install/vars/main.yml
+    - name: Check if node_exporter user exists
+      command: id -u node_exporter
+      register: node_exporter_user
+      ignore_errors: yes
+
+    - name: Stop and disable Node Exporter service
+      systemd:
+        name: node_exporter
+        enabled: no
+        state: stopped
+      when: node_exporter_user.rc == 0
+
+    - name: Remove Node Exporter service file
+      file:
+        path: "{{ node_exporter_service_file }}"
+        state: absent
+      when: node_exporter_user.rc == 0
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+      when: node_exporter_user.rc == 0
+
+    - name: Remove Node Exporter binary
+      file:
+        path: "{{ node_exporter_bin_dir }}/node_exporter"
+        state: absent
+      when: node_exporter_user.rc == 0
+
+    - name: Remove Node Exporter user
+      user:
+        name: node_exporter
+        state: absent
+      when: node_exporter_user.rc == 0
+
+    - name: Remove Node Exporter archive and extracted directory
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ node_exporter_download_dir }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+        - "{{ node_exporter_extract_dir }}"
+      when: node_exporter_user.rc == 0

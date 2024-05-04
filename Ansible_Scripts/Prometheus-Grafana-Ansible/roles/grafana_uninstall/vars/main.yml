@@ -1,0 +1,18 @@
+---
+# vars file for grafana_uninstall
+packages: 
+      - grafana
+
+grafana_service_file:
+      -  /etc/systemd/system/grafana-server.service
+      -  /lib/systemd/system/grafana-server.service 
+grafana_files_to_remove:
+      - /etc/default/grafana-server
+      - /etc/grafana
+      - /etc/init.d/grafana-server
+      - /usr/lib/systemd/system/grafana-server.service
+      - /usr/share/grafana
+      - /var/lib/grafana
+      - /var/log/grafana
+      - /etc/apt/sources.list.d/grafana.list
+      - /usr/share/keyrings/grafana.key

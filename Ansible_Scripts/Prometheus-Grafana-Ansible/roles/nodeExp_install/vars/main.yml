@@ -1,0 +1,8 @@
+---
+# vars file for node-install
+    node_exporter_version: "1.8.0"
+    node_exporter_download_url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+    node_exporter_download_dir: "/tmp"
+    node_exporter_extract_dir: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64"
+    node_exporter_bin_dir: "/usr/local/bin"
+    node_exporter_service_file: "/etc/systemd/system/node_exporter.service"

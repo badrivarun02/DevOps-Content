@@ -1,0 +1,10 @@
+---
+- name: Deploy package using role on remote host
+  hosts: Allhost
+  become: true
+  roles:
+      - prometheus_uninstall
+      - nodeExp_uninstall
+      - grafana_uninstall
+      
+      

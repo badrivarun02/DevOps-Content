@@ -1,0 +1,55 @@
+---
+# tasks file for prometheus_uninstall
+    - name: Include variables from file
+      include_vars: 
+         file: ./roles/prometheus_install/vars/main.yml
+    - name: Check if prometheus user exists
+      command: id -u prometheus
+      register: prometheus_user
+      ignore_errors: yes
+    - name: Stop and disable Prometheus service
+      systemd:
+        name: prometheus
+        enabled: no
+        state: stopped
+    - name: Remove Prometheus service file
+      file:
+        path: "{{ prometheus_service_file }}"
+        state: absent
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+    - name: Remove Prometheus binaries
+      file:
+        path: "{{ prometheus_bin_dir }}/{{ item }}"
+        state: absent
+      loop:
+        - prometheus
+        - promtool
+    - name: Remove Prometheus config and console files
+      file:
+        path: "{{ prometheus_config_dir }}/{{ item }}"
+        state: absent
+      loop:
+        - prometheus.yml
+        - consoles
+        - console_libraries
+    - name: Remove Prometheus directories
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ prometheus_config_dir }}"
+        - "{{ prometheus_data_dir }}"
+    - name: Remove Prometheus archive and extracted directory
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ prometheus_download_dir }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+        - "{{ prometheus_extract_dir }}"
+    - name: Remove Prometheus user
+      user:
+        name: prometheus
+        state: absent
+      when: prometheus_user.rc == 0
