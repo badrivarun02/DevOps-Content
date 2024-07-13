@@ -30,19 +30,19 @@ This repository contains automation scripts for the installation and uninstallat
 2. Navigate to the directory containing the playbook:
 
     ```
-    cd /DevOps-Content/SonarQube
+    cd /DevOps-Content/SonarQube-Ansible
     ```
 
 3. Run the `maininstall.yml` playbook to install SonarQube and its dependencies:
 
     ```
-    ansible-playbook --vault-password-file pss.txt maininstall.yml  -i inventory.yml
+    ansible-playbook --vault-password-file pss.txt maininstall.yaml  -i inventory.ini
     ```
 
 4. Run the `mainuninstall.yml` playbook to uninstall SonarQube and its dependencies:
 
     ```
-    ansible-playbook mainuninstall.yml -i inventory.yml
+    ansible-playbook mainuninstall.yml -i inventory.ini
     ```
 
 5. You can check the status of SonarQube and PostgreSQL at any time using the following commands:
@@ -64,4 +64,4 @@ This repository contains automation scripts for the installation and uninstallat
       5. https://www.howtoforge.com/how-to-install-sonarqube-on-ubuntu-22-04/
       6. https://www.fosstechnix.com/how-to-install-sonarqube-on-ubuntu-22-04-lts/
       7. https://dev.to/oayanda/bash-script-sonarqube-and-postgres-database-setup-for-code-analysis-43i0
-      8. Bing_AI 
+      8. Copilot_AI 
