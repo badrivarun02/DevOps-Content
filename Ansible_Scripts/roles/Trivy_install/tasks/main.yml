@@ -1,0 +1,45 @@
+---
+# tasks file for Trivy_install
+
+    - name: Update package cache
+      apt:
+        update_cache: yes
+   
+    - name: Check if packages are installed
+      stat:
+        path: "/usr/bin/{{ item }}"
+      register: package_installed
+      loop:
+        - wget
+        - apt-transport-https
+        - gnupg
+        - lsb-release
+
+    - name: Install missing packages
+      apt:
+        name: "{{ item }}"
+        state: present
+      when: not (package_installed.results | selectattr('stat.exists', 'eq', true) | list | length > 0)
+      loop: "{{ package_installed.results | map(attribute='item') | list }}"
+
+    - name: Download Trivy GPG key
+      shell: wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+
+
+    - name: Add Trivy repository
+      shell: >
+        echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main"
+        | sudo tee /etc/apt/sources.list.d/trivy.list > /dev/null
+
+    - name: Update package cache
+      apt:
+        update_cache: yes
+
+    - name: Install Trivy
+      apt:
+        name: trivy
+        state: present
+
+    - name: Debug message
+      debug:
+        msg: "Running Trivy playbook"

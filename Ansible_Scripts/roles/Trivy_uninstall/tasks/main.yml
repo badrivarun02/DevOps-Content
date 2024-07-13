@@ -1,0 +1,22 @@
+---
+# tasks file for Trivy_uninstall
+    - name: Remove Trivy package
+      apt:
+        name: trivy
+        purge: yes
+        autoremove: yes
+        state: absent
+
+    - name: Remove Trivy repository list
+      file:
+        path: '{{ item }}'
+        state: absent
+      loop:
+        - /usr/share/keyrings/trivy.gpg
+        - /etc/apt/sources.list.d/trivy.list
+
+    - name: Remove Trivy repository key
+      apt_key:
+        url: https://aquasecurity.github.io/trivy-repo/deb/public.key
+        state: absent
+

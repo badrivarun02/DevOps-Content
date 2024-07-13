@@ -3,13 +3,23 @@
 - name: Update APT package manager repositories cache
   apt:
      update_cache: yes
-
-- name: Check if Java is installed
-  command: java --version
-  register: java_installed
+#Java installation if not available
+- name: Fetch Java version
+  shell: java -version 2>&1 | grep version | awk '{print $3}' | sed 's/"//g'
+  register: installed_java_version
+  changed_when: false
   ignore_errors: yes
 - name: Install Java if not installed
   apt:
-       name: '{{ java_package }}'
-       state: present
-  when: java_installed.rc != 0
+   name: '{{ java_package }}'
+   state: present
+  when: installed_java_version.stdout != 0 or java_version not in installed_java_version.stdout
+
+- name: Verify Java installation
+  shell: java -version
+  changed_when: false
+  register: java_installed
+
+- debug:
+        msg: "Java {{ java_installed }} is installed: {{ java_installed.stdout }}"
+

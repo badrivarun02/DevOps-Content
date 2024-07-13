@@ -1,0 +1,59 @@
+---
+- name: Update APT package manager repositories cache
+  apt:
+    update_cache: yes
+
+- name: Install Java if not installed
+  command: java --version
+  ignore_errors: yes
+  register: java_check
+
+- name: ensure the jenkins apt repository key is installed
+  get_url:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+        dest: /usr/share/keyrings/jenkins-keyring.asc
+        mode: 0644
+    # Add Jenkins repository with signed key
+- name: Add Jenkins repository
+  lineinfile:
+        path: /etc/apt/sources.list.d/jenkins.list
+        state: present
+        line: "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/"
+        create: yes
+
+    # Update package lists
+- name: Update package lists
+  apt:
+        update_cache: yes
+    # Install Jenkins (install Java only if needed)
+- name: Install Jenkins
+  apt:
+        name: jenkins
+        state: present
+  when: java_check.rc == 0  # Install Jenkins only if Java is present
+
+- name: ensure jenkins is running # This is the name of the sixth task
+  service: name=jenkins state=started
+
+- name: Change Jenkins HTTP port in Jenkins service file
+  lineinfile:
+    path: /usr/lib/systemd/system/jenkins.service
+    regexp: '^Environment="JENKINS_PORT='
+    line: 'Environment="JENKINS_PORT={{ jenkins_http_port }}"'
+  when: jenkins_http_port is defined  # Only run if the variable is set
+  notify: 
+    - Reload systemd
+    - Restart Jenkins  
+
+- name: Get status of Jenkins service
+  command: systemctl status jenkins
+  register: jenkins_status
+  ignore_errors: yes
+- name: Display status of Jenkins service
+  debug:
+    var: jenkins_status.stdout_lines
+
+- name: Task-6 Display the password of jenkinsinstalliation
+  shell: cat  /var/lib/jenkins/secrets/initialAdminPassword
+  register: displaypass
+- debug: var=displaypass.stdout

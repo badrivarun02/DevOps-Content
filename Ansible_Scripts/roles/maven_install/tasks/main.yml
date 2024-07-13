@@ -4,17 +4,28 @@
 - name: Update APT package manager repositories cache
   apt:
    update_cache: yes
+
 #Java installation if not available  
-- name: Check if Java is installed
-  command: java --version
-  register: java_installed
+- name: Fetch Java version
+  shell: java -version 2>&1 | grep version | awk '{print $3}' | sed 's/"//g'
+  register: installed_java_version
+  changed_when: false
   ignore_errors: yes
 - name: Install Java if not installed
   apt:
    name: '{{ java_package }}'
    state: present
-  when: java_installed.rc != 0
+  when: installed_java_version.stdout != 0 or java_version not in installed_java_version.stdout
 
+- name: Verify Java installation
+  shell: java -version
+  changed_when: false
+  register: java_installed
+
+- debug:
+        msg: "Java {{ java_version }} is installed: {{ java_installed.stdout }}"
+
+#Downloading Maven ,config and check status of maven version
 - name: Download Maven
   get_url:
     url: "{{ maven_download_url }}"
@@ -37,7 +48,7 @@
       export JAVA_HOME={{ java_home }}
       export M2_HOME={{ maven_install_dir }}
       export MAVEN_HOME={{ maven_install_dir }}
-      export PATH=${M2_HOME}/bin:${PATH}
+      export PATH=${MAVEN_HOME}/bin:${PATH}
 
 - name: Make the script executable
   file:

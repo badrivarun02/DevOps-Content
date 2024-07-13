@@ -1,9 +1,0 @@
----
-- name: Deploy package using role on remote host # This is the name of the playbook
-  hosts: Allhost # This specifies the hosts on which the playbook will run
-  become: true # This allows the playbook to use privilege escalation to become a superuser
-  tasks: # This is a list of tasks that will be executed in order
-   - include_role: # This includes a role in the playbook
-      name: jenkins_install # This specifies the name of the role to include
-     when: inventory_hostname == "localhost" # This specifies that this task should only be executed if the inventory hostname is 'localhost'
-

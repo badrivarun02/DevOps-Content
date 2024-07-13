@@ -13,3 +13,10 @@
        - "{{ maven_install_dir }}"
        - /tmp/apache-maven-{{ maven_version }}-bin.tar.gz
        - /etc/profile.d/maven.sh  
+       - /opt/apache-maven-{{ maven_version }}
+  - name: Uninstall Java
+    apt:
+     name: "{{java_package}}"
+     state: absent
+     purge: yes
+     autoremove: yes
