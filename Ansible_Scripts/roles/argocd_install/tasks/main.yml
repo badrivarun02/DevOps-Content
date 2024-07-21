@@ -1,0 +1,48 @@
+---
+# tasks file for argocd_install
+    - name: Update APT package manager repositories cache
+      apt:
+         update_cache: yes
+
+    - name: Create Namespace for ArgoCD
+      shell: kubectl create namespace argocd
+      register: create_namespace_result
+      failed_when: create_namespace_result.rc != 0
+
+    - name: Apply ArgoCD Manifests
+      shell: kubectl apply -n argocd -f '{{argocd_url}}'
+      register: apply_manifests_result
+      failed_when: apply_manifests_result.rc != 0
+
+    - name: Patch Service Type to LoadBalancer
+      shell: | 
+           kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
+
+    - name: Change ArgoCD port to custom port
+      shell: |
+        kubectl patch svc argocd-server -n argocd --type='json' -p '[{"op": "replace", "path": "/spec/ports/0/port", "value": 8063}]'
+      register: port_change_result
+
+    - name: Display updated port
+      debug:
+       var: port_change_result.stdout_lines
+
+    - name: Get pod status
+      command: kubectl get pods -n argocd
+      register: pod_status
+
+    - name: Wait for pods to be running
+      wait_for:
+        timeout: 150  # Set your desired timeout in seconds
+        delay: 10     # Set the delay between checks
+        state: started
+      when: "'Running' not in pod_status.stdout"
+
+
+    - name: Retrieve Admin Password
+      shell: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+      register: admin_password
+
+    - name: Display Admin Password
+      debug:
+        var: admin_password.stdout

@@ -1,0 +1,16 @@
+---
+# tasks file for argocd_uninstall
+
+- name: Uninstall ArgoCD
+  shell: kubectl delete namespace argocd
+
+- name: Remove ArgoCD Resources (Loop with Error Handling)
+  shell: '{{ item }}'
+  register: delete_result
+  loop:
+  - kubectl delete clusterrole argocd-server argocd-applicationset-controller argocd-application-controller
+  - kubectl delete customresourcedefinition applications.argoproj.io applicationsets.argoproj.io appprojects.argoproj.io
+  - kubectl delete clusterrolebinding argocd-server argocd-applicationset-controller argocd-application-controller
+  failed_when: delete_result.rc != 0  # Fail task if deletion fails
+
+
