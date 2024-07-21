@@ -17,6 +17,7 @@ As an Argo CD Installation , I developed an Ansible playbook to automate the ins
    - The playbook waited until Argo CD was in a running state before fetching the password.
 
 Overall, my role focused on streamlining Argo CD deployment, enhancing security, and ensuring smooth operations. 😊🚀
+
 Requirements
 ------------
 
@@ -24,10 +25,10 @@ Requirements
 
 Role Variables
 --------------
-# Argo CD version to install
+### Argo CD version to install
 argocd_version: 2.10.14
 
-# URL for the Argo CD installation manifest
+### URL for the Argo CD installation manifest
 argocd_url: "https://raw.githubusercontent.com/argoproj/argo-cd/v{{ argocd_version }}/manifests/ha/install.yaml"
 
 Example Playbook
