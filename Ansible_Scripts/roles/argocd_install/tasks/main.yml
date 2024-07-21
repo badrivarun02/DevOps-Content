@@ -21,11 +21,6 @@
     - name: Change ArgoCD port to custom port
       shell: |
         kubectl patch svc argocd-server -n argocd --type='json' -p '[{"op": "replace", "path": "/spec/ports/0/port", "value": 8063}]'
-      register: port_change_result
-
-    - name: Display updated port
-      debug:
-       var: port_change_result.stdout_lines
 
     - name: Get pod status
       command: kubectl get pods -n argocd
