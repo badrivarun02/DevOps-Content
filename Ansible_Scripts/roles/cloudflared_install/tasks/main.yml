@@ -1,0 +1,43 @@
+---
+# tasks file for cloudflare_install
+# Create directory if it doesn't exist
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    # Download Cloudflare GPG key
+    - name: Download Cloudflare GPG key
+      get_url:
+        url: https://pkg.cloudflare.com/cloudflare-main.gpg
+        dest: /usr/share/keyrings/cloudflare-main.gpg
+        mode: 0644
+
+    # Get distribution codename using set_fact
+    - name: Get distribution codename
+      set_fact:
+        dist_codename: "{{ ansible_lsb.codename }}"
+      # Check if lsb_release is available
+      failed_when: ansible_lsb is undefined
+
+
+    - name: get dist_codename
+      debug:
+       var: dist_codename
+
+    # Add Cloudflare repository
+    - name: Add Cloudflare repository
+      lineinfile:
+        path: /etc/apt/sources.list.d/cloudflared.list
+        line: 'deb [signed-by={{ cloudflare_gpg_key }}] https://pkg.cloudflare.com/cloudflared {{ dist_codename }} main'
+        create: yes
+        state: present
+
+    # Update package lists and install cloudflared
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install cloudflared
+      apt:
+        name: cloudflared
+        state: present

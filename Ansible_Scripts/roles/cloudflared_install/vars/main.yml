@@ -1,0 +1,4 @@
+---
+# vars file for cloudflared_install
+# vars file for cloudflare_install
+cloudflare_gpg_key: /usr/share/keyrings/cloudflare-main.gpg  # Path to downloaded key

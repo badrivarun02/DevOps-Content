@@ -1,0 +1,18 @@
+---
+# tasks file for cloudflared_uninstall
+
+
+    - name: Uninstall cloudflared
+      apt:
+        name: cloudflared
+        state: absent
+        purge: yes
+        autoremove: yes
+
+    - name: Remove cloudflared repository and GPG key
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/usr/share/keyrings/cloudflare-main.gpg"
+        - "/etc/apt/sources.list.d/cloudflared.list"
