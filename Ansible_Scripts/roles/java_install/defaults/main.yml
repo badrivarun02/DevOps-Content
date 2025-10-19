@@ -1,2 +1,3 @@
 ---
 # defaults file for java_install
+java_package: "openjdk-11-jre-headless"

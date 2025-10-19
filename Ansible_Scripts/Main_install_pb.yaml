@@ -1,0 +1,7 @@
+---
+- name: Deploy package using role on remote host
+  hosts: Allhost
+  become: true
+  roles:
+    - java_install
+    - maven_install

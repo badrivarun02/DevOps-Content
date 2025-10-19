@@ -1,4 +1,4 @@
 ---
 # vars file for argocd_install
-argocd_version: 2.10.14
+argocd_version: 3.1.9
 argocd_url: https://raw.githubusercontent.com/argoproj/argo-cd/v{{ argocd_version }}/manifests/ha/install.yaml

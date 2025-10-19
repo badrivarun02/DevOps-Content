@@ -1,12 +1,10 @@
-    #!/bin/bash
-    #Update the system
-    sudo apt update
+#!/bin/bash
+set -e  # Exit on error
 
-    #Add the Ansible repository
-    sudo apt-add-repository ppa:ansible/ansible
+# Ensure required tools are present
+sudo apt update
+sudo apt install -y software-properties-common python3-pip libssl-dev
 
-    #Install Ansible
-    sudo apt install ansible
-
-    #Install python-pip and libssl-dev
-    sudo apt-get install -y python3-pip libssl-dev
+# Add Ansible PPA and install
+sudo add-apt-repository --yes --update ppa:ansible/ansible
+sudo apt install -y ansible

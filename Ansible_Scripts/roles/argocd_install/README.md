@@ -26,7 +26,7 @@ Requirements
 Role Variables
 --------------
 ### Argo CD version to install
-argocd_version: 2.10.14
+argocd_version: 3.1.9
 
 ### URL for the Argo CD installation manifest
 argocd_url: "https://raw.githubusercontent.com/argoproj/argo-cd/v{{ argocd_version }}/manifests/ha/install.yaml"
