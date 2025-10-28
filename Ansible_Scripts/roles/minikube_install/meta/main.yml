@@ -1,0 +1,37 @@
+#SPDX-License-Identifier: MIT-0
+galaxy_info:
+  author: Badri
+  description: >
+    Ansible role to install and configure Minikube and kubectl on Ubuntu systems.
+    It ensures required packages, Docker driver, Minikube binary, and kubectl are installed
+    only if missing. Designed for idempotent setup and local Kubernetes experimentation.
+
+
+  license: MIT
+
+  min_ansible_version: 2.9
+
+  galaxy_tags:
+    - minikube
+    - kubernetes
+    - kubectl
+    - docker
+    - ubuntu
+    - devops
+    - virtualization
+    - container
+    - local
+    - cluster
+    - setup
+    - automation
+    - ci
+    - cloud
+    - linux
+    - ansible
+    - role
+    - infrastructure
+    - provisioning
+    - idempotent
+
+dependencies: []
+

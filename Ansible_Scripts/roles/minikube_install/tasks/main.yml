@@ -1,0 +1,96 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for minikube_install
+# Update
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Upgrade all packages
+  apt:
+    upgrade: dist
+
+#Essential packages
+- name: Ensure curl, wget, apt-transport-https are installed
+  apt:
+    name:
+      - curl
+      - wget
+      - apt-transport-https
+    state: present
+
+# Docker install
+- name: Ensure Docker is installed
+  apt:
+    name: docker.io
+    state: present
+
+- name: Get current shell user
+  command: whoami
+  register: current_user
+  changed_when: false
+
+- name: Add current user to docker group
+  user:
+    name: "{{ current_user.stdout }}"
+    groups: docker
+    append: yes
+  become: true
+
+- name: Show resolved user
+  debug:
+    msg: "User being added to docker group: {{ current_user.stdout }}"
+
+ # Minikube Install
+- name: Check if Minikube is already installed
+  stat:
+    path: /usr/local/bin/minikube
+  register: minikube_bin
+
+- name: Download Minikube binary
+  get_url:
+    url: https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
+    dest: /tmp/minikube-linux-amd64
+    mode: '0755'
+  when: not minikube_bin.stat.exists
+
+- name: Install Minikube
+  command: install /tmp/minikube-linux-amd64 /usr/local/bin/minikube
+  when: not minikube_bin.stat.exists
+
+- name: Remove downloaded binary
+  file:
+    path: /tmp/minikube-linux-amd64
+    state: absent
+  when: not minikube_bin.stat.exists
+
+# kubectl Install
+- name: Check if kubectl is installed
+  command: kubectl version --client --short
+  register: kubectl_check
+  ignore_errors: true
+
+- name: Install kubectl via snap
+  snap:
+    name: kubectl
+    classic: yes
+    state: present
+  when: kubectl_check.rc != 0
+
+ # Minikube_start
+- name: Start Minikube with Docker driver
+  command: minikube start --driver=docker
+  register: minikube_start
+  changed_when: "'Done!' in minikube_start.stdout"
+
+- name: Check Minikube status
+  command: minikube status
+  register: minikube_status
+  changed_when: false
+
+- name: Get Kubernetes nodes
+  command: kubectl get nodes
+  register: kubectl_nodes
+  changed_when: false
+

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage: ./deep_uninstall_docker.sh [--safe] [--dry-run] [--log]
+# Usage: ./uninstall_docker.sh [--safe] [--dry-run] [--log]
 
 MODE="full"  # default mode is full cleanup
 LOGGING=false
